@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import logging
-from modules.payload_builder import PayloadBuilder
+from modules.mp_generator import Generator
 from collections import OrderedDict
 
 """
@@ -58,7 +58,7 @@ IconFile=C:\WINDOWS\SYSTEM32\url.dll
 Hotkey=0
 """
 
-class UrlShortcutGenerator(PayloadBuilder):
+class UrlShortcutGenerator(Generator):
     """ Module used to generate malicious URL shortcut"""
     
     def check(self):

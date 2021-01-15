@@ -4,7 +4,8 @@
 import logging
 from modules.vba_gen import VBAGenerator
 import re, os
-
+from vbLib import Base64ToBin, CreateBinFile
+import base64
 
 VBS_TEMPLATE = \
 r"""
@@ -44,22 +45,11 @@ class VBSGenerator(VBAGenerator):
         return True
     
     
-    
-    def printFile(self):
-        """ Display generated code on stdout """
-        if os.path.isfile(self.outputFilePath):
-            logging.info(" [+] Generated file content:\n") 
-            with open(self.outputFilePath,'r') as f:
-                print(f.read())
-    
-    
     def vbScriptConvert(self):
         logging.info("   [-] Convert VBA to VBScript...")
         translators = [("Val(","CInt("),(" Chr$"," Chr"),(" Mid$"," Mid"),("On Error GoTo","'//On Error GoTo"),("byebye:",""), ("Next ", "Next '//")]
-        translators.extend([("() As String"," "),("CVar","")])
-        translators.extend([(" As String"," "),(" As Object"," "),(" As Long"," "),(" As Integer"," "),(" As Variant"," "), (" As Boolean", " "), (" As Byte", " "), (" As Excel.Application", " "), (" As Word.Application", " ")])
+        translators.extend([(" As String"," "),(" As Object"," "),(" As Long"," "),(" As Integer"," "),(" As Variant"," "), (" As Boolean", " "), (" As Byte", " ")])
         translators.extend([ ("MsgBox ", "WScript.Echo "), ('Application.Wait Now + TimeValue("0:00:01")', 'WScript.Sleep(1000)')])
-        translators.extend([ ('ChDir ', 'createobject("WScript.Shell").currentdirectory =  ')])
         content = []
         for vbaFile in self.getVBAFiles():  
             f = open(vbaFile)
@@ -70,9 +60,6 @@ class VBSGenerator(VBAGenerator):
             # Do easy translations
             for translator in translators:
                 line = line.replace(translator[0],translator[1])
-            
-            if line.strip() == "End":
-                line = "Wscript.Quit 0 \n"
             
             # Check if ENVIRON is used
             if line.find("Environ(")!= -1:
@@ -90,6 +77,45 @@ class VBSGenerator(VBAGenerator):
         f.writelines(content)
         f.close()
         
+    
+    
+    def embedFile(self):
+        """
+        Embed the content of  self.embeddedFilePath inside the generated target file
+        """
+        logging.info("   [-] Embedding file %s..." % self.embeddedFilePath)
+        if not os.path.isfile(self.embeddedFilePath):
+            logging.warning("   [!] Could not find %s! " % self.embeddedFilePath)
+            return
+        
+        f = open(self.embeddedFilePath, 'rb')
+        content = f.read()
+        f.close()
+        encodedBytes = base64.b64encode(content)
+        base64Str= encodedBytes.decode("utf-8")  
+       
+        # Shorten size if needed
+        VBAMAXLINELEN = 100 # VBA will fail if line is too long
+        cpt = 0
+        newPackedMacro = ""
+        nbIter = int(len(base64Str) / VBAMAXLINELEN)
+        # Create a VBA string builder containing all encoded macro
+        while cpt < nbIter:
+            newPackedMacro += base64Str[cpt * VBAMAXLINELEN:(cpt+1) * VBAMAXLINELEN] + "\" \n str = str & \"" 
+            cpt += 1
+        newPackedMacro += base64Str[cpt * VBAMAXLINELEN:] 
+        packedMacro= "\"" + newPackedMacro + "\"" 
+    
+        newContent = Base64ToBin.VBA + "\n"
+        newContent += CreateBinFile.VBA + "\n"
+        newContent += "Sub DumpFile(strFilename)"
+        newContent += "\n Dim str \n str = %s \n readEmbed = Base64ToBin(str) \n CreateBinFile strFilename, readEmbed \n" % (packedMacro) 
+        newContent += "End Sub \n \n"       
+        
+        
+        self.addVBAModule(newContent)
+        return  
+    
     
     def generate(self):
                 

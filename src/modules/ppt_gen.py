@@ -13,7 +13,7 @@ if sys.platform == "win32":
     import winreg # @UnresolvedImport
 
 import logging
-from common import utils    
+from common import utils
 from modules.vba_gen import VBAGenerator
 
 
@@ -81,18 +81,11 @@ class PowerPointGenerator(VBAGenerator):
         # 3 Recreate archive
         shutil.make_archive(os.path.join(self.workingPath,"rezipped_archive"), format="zip", root_dir=os.path.join(self.workingPath, "zip")) 
         # 4 replace file
-        os.remove(generatedFile)
         shutil.copy2(os.path.join(self.workingPath,"rezipped_archive.zip"), generatedFile)
     
     
     def check(self):
         logging.info("   [-] Check feasibility...")
-        if utils.checkIfProcessRunning("powerpnt.exe"):
-            logging.error("   [!] Cannot generate PowerPoint payload if PowerPoint is already running.")
-            if self.mpSession.forceYes or utils.yesOrNo(" Do you want macro_pack to kill PowerPoint process? "):
-                utils.forceProcessKill("powerpnt.exe")
-            else:
-                return False
         try:
             ppt = win32com.client.Dispatch("PowerPoint.Application")
             ppt.Quit()
@@ -114,6 +107,9 @@ class PowerPointGenerator(VBAGenerator):
     
             logging.info("   [-] Open presentation...")
             presentation = ppt.Presentations.Add(WithWindow = False)
+            customLayout = presentation.SlideMaster.CustomLayouts(1)
+            presentation.Slides.AddSlide(1, customLayout)
+
             
             self.resetVBAEntryPoint()
             logging.info("   [-] Inject VBA...")
@@ -132,12 +128,19 @@ class PowerPointGenerator(VBAGenerator):
             presentation.RemoveDocumentInformation(ppRDIAll)
             
             logging.info("   [-] Save presentation...")
-            pptXMLFileFormatMap = {".pptm": 25, ".potm": 27}
+            #pptFileFormatMap = {".ppt": 1, ".pot": 5, ".pps": 7}
+            pptXMLFileFormatMap = {".pptm": 25, ".potm": 27}#, ".ppsm": 29}
+            # Need to add a slide to make .pps and .ppsm work
+            #if MSTypes.PPT97 == self.outputFileType:
+            #    presentation.SaveAs(self.outputFilePath, FileFormat=pptFileFormatMap[self.outputFilePath[-4:]])
+            # Can only make macro auto run in XML PPT format (.pptm, .potm)
             if MSTypes.PPT == self.outputFileType:
                 presentation.SaveAs(self.outputFilePath, FileFormat=pptXMLFileFormatMap[self.outputFilePath[-5:]])
             # save the presentation and close
-            ppt.Presentations(1).Close()
-            ppt.Quit()
+            # Avoid triggering macro(s) that trigger on close
+            os.system("taskkill /f /im powerpnt.exe")
+            #ppt.Presentations(1).Close()
+            #ppt.Quit()
             # garbage collection
             del ppt
             
@@ -147,7 +150,7 @@ class PowerPointGenerator(VBAGenerator):
             self._injectCustomUi()
                
             logging.info("   [-] Generated %s file path: %s" % (self.outputFileType, self.outputFilePath))
-            logging.info("   [-] Test with : \n%s --run %s\n" % (utils.getRunningApp(),self.outputFilePath))
+            logging.info("   [-] Test with : \nmacro_pack.exe --run %s\n" % self.outputFilePath)
         
         except Exception:
             logging.exception(" [!] Exception caught!")
@@ -155,9 +158,6 @@ class PowerPointGenerator(VBAGenerator):
             logging.error(" [!] Attempt to force close MS Powerpoint application...")
             ppt = win32com.client.Dispatch("PowerPoint.Application")
             ppt.Quit()
-            # If it Application.Quit() was not enough we force kill the process
-            if utils.checkIfProcessRunning("powerpnt.exe"):
-                utils.forceProcessKill("powerpnt.exe")
             del ppt
      
         

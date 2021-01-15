@@ -12,29 +12,28 @@ class MpSession:
 
         # Attrs depending on getter/setter
         self._outputFilePath = ""
-        self._outputFileType = MSTypes.UNKNOWN    
+        self._outputFileType = MSTypes.UNKNOWN
 
         # regular Attrs
+        self.vbomEncode = False
+        self.background = False
+        self.avBypass = False
         self.uacBypass  = False
         self.obfuscateForm =  False
         self.obfuscateNames =  False
         self.obfuscateStrings =  False
-        self.obfOnlyMain = False
-        self.doNotObfConst = False
-        self.ObfReplaceConstants = True
-        
-        self.fileInput = None
+        self.persist = False
+        self.keepAlive = False
+        self.trojan = False
+        self.stealth = False
+        self.vbaInput = None
         self.startFunction = None
         self.stdinContent = None
         self.template = None
         self.ddeMode = False # attack using Dynamic Data Exchange (DDE) protocol (see https://sensepost.com/blog/2017/macro-less-code-exec-in-msword/)
-        self.dosCommand = None
-        self.icon = "%windir%\system32\imageres.dll,67" # by default JPG immage icon
-
-       
+        self.dcom = False
+        self.dcomTarget = None
         self.runTarget = None
-        self.runVisible = False
-        self.forceYes = False
         self.printFile = False
         self.unicodeRtlo = None
 
@@ -42,14 +41,9 @@ class MpSession:
         self.listenPort = 80
         self.listenRoot = "."
         self.embeddedFilePath = None
-        
-        self.isTrojanMode = False
-        self.htaMacro = False
 
         self.Wlisten = False
         self.WRoot = "."
-        
-        self.vbModulesList = []
 
     @property
     def outputFileType(self):

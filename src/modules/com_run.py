@@ -4,7 +4,6 @@
 # Only enabled on windows
 import sys
 import os
-import time
 if sys.platform == "win32":
     # Download and install pywin32 from https://sourceforge.net/projects/pywin32/files/pywin32/
     import win32com.client # @UnresolvedImport
@@ -32,7 +31,7 @@ class ComGenerator(MpModule):
             return
         
         targetApp = MSTypes.guessApplicationType(self.comTarget)
-        if MSTypes.XL in targetApp or MSTypes.SYLK in targetApp:
+        if MSTypes.XL in targetApp:
             comApp = "Excel.Application"
         elif MSTypes.WD in targetApp:
             comApp = "Word.Application"
@@ -64,19 +63,14 @@ class ComGenerator(MpModule):
 
         # do the operation in background without actually opening Excel
         try:
-            if MSTypes.XL in targetApp or MSTypes.SYLK in targetApp:
-                if self.mpSession.runVisible:
-                    comObj.Visible = True
+            if MSTypes.XL in targetApp:
                 document = comObj.Workbooks.Open(self.comTarget)
             elif MSTypes.WD in targetApp or MSTypes.VSD in targetApp:
-                if self.mpSession.runVisible:
-                    comObj.Visible = True
                 document = comObj.Documents.Open(self.comTarget)
             elif MSTypes.PPT in targetApp:
                 document = comObj.Presentations.Open(self.comTarget)
             elif MSTypes.ACC in targetApp:
-                comObj.OpenCurrentDatabase(self.comTarget)
-                #comObj.DoCmd.RunMacro(self.startFunction)
+                document = comObj.OpenCurrentDatabase(self.comTarget)
             elif MSTypes.MPP in targetApp:
                 document = comObj.FileOpen(self.comTarget, True)
             if self.startFunction and self.startFunction not in self.potentialStartFunctions:
@@ -84,9 +78,6 @@ class ComGenerator(MpModule):
         except Exception:
             logging.exception("   [!] Problem detected!")
         
-        time.sleep(1.5) # need to have app alive to launch async call with --background option
-
-                
         logging.info("   [-] Cleanup...")
         try:
             document.close()

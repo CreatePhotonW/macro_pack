@@ -4,7 +4,7 @@
 # Only enabled on windows
 import sys
 import os
-from common import utils
+from common.utils import MSTypes
 if sys.platform == "win32":
     # Download and install pywin32 from https://sourceforge.net/projects/pywin32/files/pywin32/
     import win32com.client # @UnresolvedImport
@@ -68,7 +68,7 @@ class AccessGenerator(VBAGenerator):
             logging.error("   [!] Cannot access Access.Application object. Is software installed on machine? Abort.")
             return False  
         return True
-     
+    
     
     def generate(self):
         
@@ -122,6 +122,7 @@ class AccessGenerator(VBAGenerator):
             )
 
             # save the database and close
+            # todo: quit without saving to avoid trigger on close macro(s)
             access.CloseCurrentDatabase()
             access.Quit()
             # garbage collection
@@ -131,7 +132,7 @@ class AccessGenerator(VBAGenerator):
 
             logging.info("   [-] Generated %s file path: %s" % (self.outputFileType, self.outputFilePath))
             logging.info("   [-] To create a compiled file, open %s and save as .accde!" % self.outputFilePath)
-            logging.info("   [-] Test with : \n%s --run %s\n" % (utils.getRunningApp(),self.outputFilePath))
+            logging.info("   [-] Test with : \nmacro_pack.exe --run %s\n" % self.outputFilePath)
             
         except Exception:
             logging.exception(" [!] Exception caught!")

@@ -11,8 +11,8 @@ r'''
 #End If
 
 
-Sub MySleep(sleepNbSeconds)
-    Sleep sleepNbSeconds * 1000
+Sub MySleep(nbSeconds)
+    Sleep nbSeconds * 1000
 End Sub
 
 '''
@@ -21,9 +21,9 @@ End Sub
 
 VBA_XL = \
 r'''
-Sub MySleep(sleepNbSeconds As Integer)
+Sub MySleep(nbSeconds  As Integer)
     Dim dteWait
-    dteWait = DateAdd("s", sleepNbSeconds, Now())
+    dteWait = DateAdd("s", nbSeconds, Now())
     Do Until (Now() > dteWait)
         On Error Resume Next
         Application.Wait Now + TimeValue("0:00:01")
@@ -35,16 +35,16 @@ End Sub
 
 VBS = \
 r'''
-Sub MySleep(sleepNbSeconds)
-    WScript.Sleep sleepNbSeconds * 1000
+Sub MySleep(nbSeconds)
+    WScript.Sleep nbSeconds * 1000
 End Sub
 '''
 
 VBS_HTA = \
 r'''
-Sub MySleep(sleepNbSeconds)
+Sub MySleep(nbSeconds)
     Dim dteWait
-    dteWait = DateAdd("s", sleepNbSeconds, Now())
+    dteWait = DateAdd("s", nbSeconds, Now())
     Do Until (Now() > dteWait)
         On Error Resume Next
         CreateObject("WScript.Shell").Run "cmd /c ping localhost -n " & 1,0,True
