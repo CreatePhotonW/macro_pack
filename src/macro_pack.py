@@ -139,7 +139,7 @@ def main(argv):
     mpSession = mp_session.MpSession(working_directory, VERSION, MP_TYPE)
 
     try:
-        longOptions = ["embed=", "listen=", "port=", "webdav-listen=", "generate=", "trojan=", "quiet", "input-file=", "encode","obfuscate","obfuscate-form", "obfuscate-names", "obfuscate-strings", "file=","template=", "start-function=","uac-bypass","unicode-rtlo=", "dde", "print"]
+        longOptions = ["embed=", "listen=", "port=", "webdav-listen=", "generate=", "trojan=", "quiet", "input-file=", "encode","obfuscate","obfuscate-form", "obfuscate-names", "obfuscate-strings", "file=","template=", "start-function=","uac-bypass","unicode-rtlo=", "dde", "print", "password="]
         shortOptions= "e:l:w:s:f:t:T:G:hqmop"
         # only for Pro release
         if MP_TYPE == "Pro":
@@ -209,6 +209,8 @@ def main(argv):
             if sys.platform == "win32":
                 mpSession.inputFilePath = os.path.abspath(arg)
                 mpSession.trojan = True
+        elif opt == "--password":
+            mpSession.password = arg
         else:
             if MP_TYPE == "Pro":
                 if opt=="--vbom-encode":

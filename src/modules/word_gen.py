@@ -87,7 +87,10 @@ class WordGenerator(VBAGenerator):
                 document = word.Documents.Open(self.inputFilePath)
             else:
                 document = word.Documents.Add()
-    
+
+            if self.password:
+                document.Password = self.password
+
             logging.info("   [-] Save document format...")
             wdFileFormatMap = {".doc": 0, ".dot": 1}
             wdXMLFileFormatMap = {".docx": 12, ".docm": 13, ".dotx": 14, ".dotm": 15}

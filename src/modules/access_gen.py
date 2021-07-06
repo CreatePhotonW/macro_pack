@@ -88,6 +88,10 @@ class AccessGenerator(VBAGenerator):
             else:
                 access.NewCurrentDatabase(self.outputFilePath)
 
+            if self.password:
+                # Is it possible to encrypt the database programmatically?
+                logging.error(" [!] Password not supported for Access")
+
             self.resetVBAEntryPoint()
             logging.info("   [-] Inject VBA...")
 

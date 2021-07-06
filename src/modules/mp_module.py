@@ -17,7 +17,8 @@ class MpModule():
         self.outputFilePath = mpSession.outputFilePath
         self.outputFileType = mpSession.outputFileType
         self.template = mpSession.template
-        
+        self.password = mpSession.password
+
         self.reservedFunctions = []
         if self._startFunction is not None:
             self.reservedFunctions.append(self._startFunction)

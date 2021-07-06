@@ -110,6 +110,15 @@ class PowerPointGenerator(VBAGenerator):
                 presentation = ppt.Presentations.Open(self.inputFilePath, WithWindow=False)
             else:
                 presentation = ppt.Presentations.Add(WithWindow=False)
+
+            # Saving the presentation with a password results in a file that can't be unzipped by ZipFile
+            # Possible solution is to save the document, run _injectCustomUi, open document, set password, save
+            # if self.password:
+            #     presentation.Password = self.password
+            if self.password:
+                # Is it possible to encrypt the database programmatically?
+                logging.error(" [!] Password not supported for Access")
+
             customLayout = presentation.SlideMaster.CustomLayouts(1)
             presentation.Slides.AddSlide(1, customLayout)
 

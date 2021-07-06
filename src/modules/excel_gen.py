@@ -80,6 +80,9 @@ class ExcelGenerator(VBAGenerator):
             else:
                 workbook = excel.Workbooks.Add()
 
+            if self.password:
+                workbook.Password = self.password
+
             self.resetVBAEntryPoint()
             logging.info("   [-] Inject VBA...")
             # Read generated files

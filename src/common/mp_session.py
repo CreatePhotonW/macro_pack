@@ -27,6 +27,7 @@ class MpSession:
         self.persist = False
         self.keepAlive = False
         self.trojan = False
+        self.password = False
         self.stealth = False
         self.vbaInput = None
         self.startFunction = None
