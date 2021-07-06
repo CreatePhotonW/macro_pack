@@ -11,6 +11,8 @@ class MpSession:
         self.mpType = mpType
 
         # Attrs depending on getter/setter
+        self._inputFilePath = ""
+        self._inputFileType = MSTypes.UNKNOWN
         self._outputFilePath = ""
         self._outputFileType = MSTypes.UNKNOWN
 
@@ -57,3 +59,16 @@ class MpSession:
     def outputFilePath(self, outputFilePath):
         self._outputFilePath = outputFilePath
         self._outputFileType = MSTypes.guessApplicationType(self._outputFilePath)
+
+    @property
+    def inputFileType(self):
+        return self._inputFileType
+
+    @property
+    def inputFilePath(self):
+        return self._inputFilePath
+
+    @inputFilePath.setter
+    def inputFilePath(self, inputFilePath):
+        self._inputFilePath = inputFilePath
+        self._inputFileType = MSTypes.guessApplicationType(self._inputFilePath)

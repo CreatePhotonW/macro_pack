@@ -82,8 +82,12 @@ class AccessGenerator(VBAGenerator):
             access.Visible = False
             # open the Access database from the specified file or create if file does not exist
             logging.info("   [-] Open database...")
-            access.NewCurrentDatabase(self.outputFilePath)
-            
+
+            if self.trojan:
+                access.OpenCurrentDatabase(self.inputFilePath)
+            else:
+                access.NewCurrentDatabase(self.outputFilePath)
+
             self.resetVBAEntryPoint()
             logging.info("   [-] Inject VBA...")
 

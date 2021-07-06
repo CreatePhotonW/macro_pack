@@ -11,6 +11,9 @@ class MpModule():
         self.mpSession = mpSession
         self.workingPath = mpSession.workingPath
         self._startFunction = mpSession.startFunction
+        self.trojan = mpSession.trojan
+        self.inputFilePath = mpSession.inputFilePath
+        self.inputFileType = mpSession.inputFileType
         self.outputFilePath = mpSession.outputFilePath
         self.outputFileType = mpSession.outputFileType
         self.template = mpSession.template

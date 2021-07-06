@@ -75,8 +75,11 @@ class ExcelGenerator(VBAGenerator):
             #excel.Visible = False
             # open the excel workbook from the specified file or create if file does not exist
             logging.info("   [-] Open workbook...")
-            workbook = excel.Workbooks.Add()
-            
+            if self.trojan:
+                workbook = excel.Workbooks.Open(self.inputFilePath)
+            else:
+                workbook = excel.Workbooks.Add()
+
             self.resetVBAEntryPoint()
             logging.info("   [-] Inject VBA...")
             # Read generated files

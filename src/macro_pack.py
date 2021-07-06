@@ -92,73 +92,27 @@ def handleOfficeFormats(mpSession):
         else:
             logging.warn(" [!] Stealth option is not available for the format %s" % mpSession.outputFileType)
 
-
-    # Shall we trojan existing file?
-    if mpSession.trojan == False:
-        if MSTypes.XL in mpSession.outputFileType:
-            generator = ExcelGenerator(mpSession)
-            generator.run()
-        elif MSTypes.WD in mpSession.outputFileType:
-            generator = WordGenerator(mpSession)
-            generator.run()
-        elif MSTypes.PPT in mpSession.outputFileType:
-            generator = PowerPointGenerator(mpSession)
-            generator.run()
-        elif MSTypes.MPP == mpSession.outputFileType:
-            generator = MSProjectGenerator(mpSession)
-            generator.run()
-        elif MSTypes.VSD in mpSession.outputFileType:
-            generator = VisioGenerator(mpSession)
-            generator.run()
-        elif MSTypes.ACC in mpSession.outputFileType:
-            generator = AccessGenerator(mpSession)
-            generator.run()
-        elif MSTypes.PUB == mpSession.outputFileType and MP_TYPE == "Pro":
-            generator = PublisherGenerator(mpSession)
-            generator.run()
-    else:
-        if MSTypes.XL in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                generator = ExcelTrojan(mpSession)
-                generator.run()
-            else:
-                generator = ExcelGenerator(mpSession)
-                generator.run()
-        if MSTypes.WD in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                generator = WordTrojan(mpSession)
-                generator.run()
-            else:
-                generator = WordGenerator(mpSession)
-                generator.run()
-        if MSTypes.PPT in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                generator = PptTrojan(mpSession)
-                generator.run()
-            else:
-                generator = PowerPointGenerator(mpSession)
-                generator.run()
-        if MSTypes.VSD in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                generator = VisioTrojan(mpSession)
-                generator.run()
-            else:
-                generator = VisioGenerator(mpSession)
-                generator.run()
-        if MSTypes.ACC in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                pass
-            else:
-                generator = AccessGenerator(mpSession)
-                generator.run()
-
-        if MSTypes.MPP in mpSession.outputFileType:
-            if os.path.isfile(mpSession.outputFilePath):
-                generator = MsProjectTrojan(mpSession)
-                generator.run()
-            else:
-                generator = MSProjectGenerator(mpSession)
-                generator.run()
+    if MSTypes.XL in mpSession.outputFileType:
+        generator = ExcelGenerator(mpSession)
+        generator.run()
+    elif MSTypes.WD in mpSession.outputFileType:
+        generator = WordGenerator(mpSession)
+        generator.run()
+    elif MSTypes.PPT in mpSession.outputFileType:
+        generator = PowerPointGenerator(mpSession)
+        generator.run()
+    elif MSTypes.MPP == mpSession.outputFileType:
+        generator = MSProjectGenerator(mpSession)
+        generator.run()
+    elif MSTypes.VSD in mpSession.outputFileType:
+        generator = VisioGenerator(mpSession)
+        generator.run()
+    elif MSTypes.ACC in mpSession.outputFileType:
+        generator = AccessGenerator(mpSession)
+        generator.run()
+    elif MSTypes.PUB == mpSession.outputFileType and MP_TYPE == "Pro":
+        generator = PublisherGenerator(mpSession)
+        generator.run()
 
     if mpSession.stealth == True:
         obfuscator = Stealth(mpSession)
@@ -185,12 +139,12 @@ def main(argv):
     mpSession = mp_session.MpSession(working_directory, VERSION, MP_TYPE)
 
     try:
-        longOptions = ["embed=", "listen=", "port=", "webdav-listen=", "generate=", "quiet", "input-file=", "encode","obfuscate","obfuscate-form", "obfuscate-names", "obfuscate-strings", "file=","template=", "start-function=","uac-bypass","unicode-rtlo=", "dde", "print"]
-        shortOptions= "e:l:w:s:f:t:G:hqmop"
+        longOptions = ["embed=", "listen=", "port=", "webdav-listen=", "generate=", "trojan=", "quiet", "input-file=", "encode","obfuscate","obfuscate-form", "obfuscate-names", "obfuscate-strings", "file=","template=", "start-function=","uac-bypass","unicode-rtlo=", "dde", "print"]
+        shortOptions= "e:l:w:s:f:t:T:G:hqmop"
         # only for Pro release
         if MP_TYPE == "Pro":
-            longOptions.extend(["vbom-encode", "persist","keep-alive", "av-bypass", "trojan=", "stealth", "dcom=", "background"])
-            shortOptions += "T:b"
+            longOptions.extend(["vbom-encode", "persist","keep-alive", "av-bypass", "stealth", "dcom=", "background"])
+            shortOptions += "b"
         # Only enabled on windows
         if sys.platform == "win32":
             longOptions.extend([ "run="])
@@ -250,6 +204,11 @@ def main(argv):
         elif opt=="-h" or opt=="--help":
             help.printUsage(BANNER, sys.argv[0], mpSession)
             sys.exit(0)
+        elif opt == "-T" or opt == "--trojan":
+            # Document generation enabled only on windows
+            if sys.platform == "win32":
+                mpSession.inputFilePath = os.path.abspath(arg)
+                mpSession.trojan = True
         else:
             if MP_TYPE == "Pro":
                 if opt=="--vbom-encode":
@@ -260,12 +219,6 @@ def main(argv):
                     mpSession.keepAlive = True
                 elif opt=="--av-bypass":
                     mpSession.avBypass = True
-                
-                elif opt == "-T" or opt=="--trojan":
-                    # Document generation enabled only on windows
-                    if sys.platform == "win32":
-                        mpSession.outputFilePath = os.path.abspath(arg)
-                        mpSession.trojan = True
                 elif opt == "-b" or opt=="--background":
                     mpSession.background = True
                 elif opt == "--stealth":
@@ -341,8 +294,8 @@ def main(argv):
         # In trojan mode, files are tojaned if they already exist and created if they dont.
         # This concerns only non Office documents for now
         if  mpSession.outputFileType not in MSTypes.MS_OFFICE_FORMATS:
-            if os.path.isfile(mpSession.outputFilePath):
-                logging.error("   [!] ERROR: Trojan mode not supported for %s format. \nOutput file %s already exist!" % (mpSession.outputFileType,mpSession.outputFilePath))
+            if os.path.isfile(mpSession.inputFilePath):
+                logging.error("   [!] ERROR: Trojan mode not supported for %s format. \nOutput file %s already exist!" % (mpSession.inputFileType,mpSession.inputFilePath))
                 sys.exit(2)
 
 

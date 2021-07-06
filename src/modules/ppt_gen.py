@@ -106,7 +106,10 @@ class PowerPointGenerator(VBAGenerator):
             ppt = win32com.client.Dispatch("PowerPoint.Application")
     
             logging.info("   [-] Open presentation...")
-            presentation = ppt.Presentations.Add(WithWindow = False)
+            if self.trojan:
+                presentation = ppt.Presentations.Open(self.inputFilePath, WithWindow=False)
+            else:
+                presentation = ppt.Presentations.Add(WithWindow=False)
             customLayout = presentation.SlideMaster.CustomLayouts(1)
             presentation.Slides.AddSlide(1, customLayout)
 

@@ -83,7 +83,10 @@ class WordGenerator(VBAGenerator):
             word = win32com.client.Dispatch("Word.Application")
             # do the operation in background without actually opening Excel
             word.Visible = False
-            document = word.Documents.Add()
+            if self.trojan:
+                document = word.Documents.Open(self.inputFilePath)
+            else:
+                document = word.Documents.Add()
     
             logging.info("   [-] Save document format...")
             wdFileFormatMap = {".doc": 0, ".dot": 1}
